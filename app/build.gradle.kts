@@ -36,6 +36,23 @@ android {
 }
 
 dependencies {
+    // Firebase
+    implementation(platform("com.google.firebase:firebase-bom:33.8.0"))
+    implementation("com.google.firebase:firebase-auth")
+    implementation("com.google.firebase:firebase-firestore")
+    implementation("com.google.firebase:firebase-storage")
+    implementation("com.google.android.material:material:1.11.0")
+    //implementation("com.google.firebase:firebase-analytics")
+
+    //Manipulação de imagem
+    implementation("com.squareup.picasso:picasso:2.8")
+
+
+
+    implementation("com.github.bumptech.glide:glide:4.12.0")
+    annotationProcessor("com.github.bumptech.glide:compiler:4.12.0")
+
+
 
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.appcompat)
