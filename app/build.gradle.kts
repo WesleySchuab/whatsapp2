@@ -1,6 +1,8 @@
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
+    id("com.google.gms.google-services")
+    id("kotlin-parcelize")
 }
 
 android {
@@ -45,7 +47,8 @@ dependencies {
     implementation("com.google.firebase:firebase-firestore")
     implementation("com.google.firebase:firebase-storage")
     implementation("com.google.android.material:material:1.11.0")
-    //implementation("com.google.firebase:firebase-analytics")
+//    implementation("com.google.firebase:firebase-analytics")
+
 
     //Manipulação de imagem
     implementation("com.squareup.picasso:picasso:2.8")
