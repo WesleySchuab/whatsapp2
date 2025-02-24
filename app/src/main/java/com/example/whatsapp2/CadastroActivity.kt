@@ -118,7 +118,9 @@ class CadastroActivity : AppCompatActivity() {
         val toolbar = binding.includeToolbar.materialToolbar
         setSupportActionBar(toolbar)
         supportActionBar?.setDisplayHomeAsUpEnabled(true)
-        supportActionBar?.title = "Cadastro"
+        supportActionBar?.apply{
+            title = "Cadastro"
+        }
     }
 
     private fun salvarDadosUsuario(usuario: Usuario) {
