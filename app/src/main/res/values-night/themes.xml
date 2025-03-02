@@ -4,5 +4,8 @@
         <!-- Customize your dark theme here. -->
         <!-- <item name="colorPrimary">@color/my_dark_primary</item> -->
         <item name="colorPrimary">@color/primaria</item>
+
+        <item name="actionOverflowButtonStyle">
+            @style/ActionOverFlowButton</item>"
     </style>
 </resources>

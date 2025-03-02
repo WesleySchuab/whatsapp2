@@ -4,6 +4,18 @@
         <!-- Customize your light theme here. -->
         <!-- <item name="colorPrimary">@color/my_light_primary</item> -->
         <item name="colorPrimary">@color/primaria</item>
+
+        <item name="actionOverflowButtonStyle">
+            @style/ActionOverFlowButton</item>"
+
+    </style>
+
+    <style name="ActionOverFlowButton" parent="Widget.AppCompat.ActionButton.Overflow">
+        <item name="tint">@color/white</item>
+    </style>
+
+    <style name = "Circulo">
+        <item name="cornerSize"> 50% </item>
     </style>
 
     <style name="Theme.Whatsapp2" parent="Base.Theme.Whatsapp2" />
