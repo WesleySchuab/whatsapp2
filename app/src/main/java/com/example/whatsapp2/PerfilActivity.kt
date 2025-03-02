@@ -13,6 +13,7 @@ import androidx.core.view.WindowInsetsCompat
 import com.example.whatsapp2.databinding.ActivityPerfilBinding
 import com.example.whatsapp2.utils.exibirMensagem
 import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.storage.FirebaseStorage
 
 class PerfilActivity : AppCompatActivity() {
@@ -24,6 +25,9 @@ class PerfilActivity : AppCompatActivity() {
 
     private val firebaseAuth by lazy {
         FirebaseAuth.getInstance()
+    }
+    private val firestore by lazy {
+        FirebaseFirestore.getInstance()
     }
     private val storage by lazy {
         FirebaseStorage.getInstance()
@@ -51,45 +55,76 @@ class PerfilActivity : AppCompatActivity() {
                 .putFile(uri)
                 .addOnSuccessListener { task ->
                     exibirMensagem("sucesso ao fazer upload da imagem")
-                    task.metadata?.reference?.downloadUrl?.addOnSuccessListener { url ->
-                        exibirMensagem("sucesso ao pegar a url da imagem")
-                        val dados = mapOf(
-                            "foto" to url.toString()
-                        )
-                        //atualizarDadosPerfil(idUsuario, dados)
-                    }
+
+                    //Recuperar a url da imagem
+                    task.metadata?.reference?.downloadUrl
+                        ?.addOnSuccessListener { url ->
+                            val dados = mapOf(
+                                "foto" to url.toString()
+                            )
+                            atualizarDadosPerfil(idUsuario, dados)
+                        }
                 }.addOnFailureListener {
                     exibirMensagem("erro ao fazer upload da imagem")
                 }
         }
     }
 
-        override fun onCreate(savedInstanceState: Bundle?) {
-            super.onCreate(savedInstanceState)
-            enableEdgeToEdge()
-            setContentView(binding.root)
-            inicializarToolbar()
-            solicitarPermissoes()
-            inicializarEventosDeClique()
+    private fun atualizarDadosPerfil(idUsuario: String, dados: Map<String, String>) {
+        firestore
+            .collection("usuarios")
+            .document(idUsuario)
+            .update(dados)
+            .addOnSuccessListener {
+                exibirMensagem("Dados atualizados com sucesso")
+            }
+            .addOnFailureListener {
+                exibirMensagem("Erro ao atualizar dados")
+            }
+    }
 
-            ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.main)) { v, insets ->
-                val systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars())
-                v.setPadding(systemBars.left, systemBars.top, systemBars.right, systemBars.bottom)
-                insets
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        enableEdgeToEdge()
+        setContentView(binding.root)
+        inicializarToolbar()
+        solicitarPermissoes()
+        inicializarEventosDeClique()
+
+        ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.main)) { v, insets ->
+            val systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars())
+            v.setPadding(systemBars.left, systemBars.top, systemBars.right, systemBars.bottom)
+            insets
+        }
+    }
+
+    private fun inicializarEventosDeClique() {
+        binding.fabSelecionarGaleria.setOnClickListener {
+            // Lógica para selecionar imagem da galeria
+            if (temPermissaoCamera) {
+                gerenciadorGaleria.launch("image/*")
+            } else {
+                exibirMensagem("Não tem permissão para acessar galeria")
+                solicitarPermissoes()
             }
         }
-
-        private fun inicializarEventosDeClique() {
-            binding.fabSelecionarGaleria.setOnClickListener {
-                // Lógica para selecionar imagem da galeria
-                if (temPermissaoCamera) {
-                    gerenciadorGaleria.launch("image/*")
+        binding.btnAtualizar.setOnClickListener {
+            // Lógica para atualizar dados do usuário
+            val nomeUsuario = binding.editNomePerfil.text.toString()
+            if (nomeUsuario.isNotEmpty()) {
+                val idUsuario = firebaseAuth.currentUser?.uid
+                if (idUsuario != null) {
+                    val dados = mapOf(
+                        "nome" to nomeUsuario
+                    )
+                    atualizarDadosPerfil(idUsuario, dados)
                 } else {
-                    exibirMensagem("Não tem permissão para acessar galeria")
-                    solicitarPermissoes()
+                    exibirMensagem("Digite seu nome")
                 }
             }
+
         }
+    }
 
 
         private fun solicitarPermissoes() {
