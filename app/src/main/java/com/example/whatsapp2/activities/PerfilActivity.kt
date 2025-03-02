@@ -1,4 +1,4 @@
-package com.example.whatsapp2
+package com.example.whatsapp2.activities
 
 import android.Manifest
 import android.content.pm.PackageManager
@@ -10,6 +10,7 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.ContextCompat
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
+import com.example.whatsapp2.R
 import com.example.whatsapp2.databinding.ActivityPerfilBinding
 import com.example.whatsapp2.utils.exibirMensagem
 import com.google.firebase.auth.FirebaseAuth

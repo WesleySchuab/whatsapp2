@@ -5,7 +5,7 @@
     android:id="@+id/main"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    tools:context=".PerfilActivity">
+    tools:context=".activities.PerfilActivity">
 
     <include
         android:id="@+id/includeToolbarPerfil"
@@ -21,6 +21,7 @@
         android:id="@+id/imagePerfil"
         android:layout_width="300dp"
         android:layout_height="300dp"
+        android:scaleType="centerCrop"
         android:layout_marginTop="32dp"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintHorizontal_bias="0.5"
