@@ -15,6 +15,7 @@ import com.example.whatsapp2.utils.exibirMensagem
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.storage.FirebaseStorage
+import com.squareup.picasso.Picasso
 
 class PerfilActivity : AppCompatActivity() {
     private val binding by lazy {
@@ -98,6 +99,33 @@ class PerfilActivity : AppCompatActivity() {
         }
     }
 
+    override fun onStart() {
+        super.onStart()
+        val idUsuario = firebaseAuth.currentUser?.uid
+        if (idUsuario != null) {
+            firestore
+                .collection("usuarios")
+                .document(idUsuario)
+                .get()
+                .addOnSuccessListener { documentoSnapshot ->
+                    val dados = documentoSnapshot.data
+                    if (dados != null) {
+                        val nome = dados["nome"] as String
+                        val foto = dados["foto"] as String
+                        // Exibir os dados no layout
+                        binding.editNomePerfil.setText(nome)
+                        if (foto.isNotEmpty()) {
+                            // Carregar a imagem do perfilbinding.imagePerfil.setImageURI(Uri.parse(foto))
+                            Picasso.get()
+                                .load(foto)
+                                .into(binding.imagePerfil)
+                        }
+                    }
+
+                }
+        }
+    }
+
     private fun inicializarEventosDeClique() {
         binding.fabSelecionarGaleria.setOnClickListener {
             // Lógica para selecionar imagem da galeria
@@ -127,43 +155,43 @@ class PerfilActivity : AppCompatActivity() {
     }
 
 
-        private fun solicitarPermissoes() {
-            // Verificar se as permissões já foram concedidas
-            temPermissaoCamera = ContextCompat.checkSelfPermission(
-                this, Manifest.permission.CAMERA
-            ) == PackageManager.PERMISSION_GRANTED
+    private fun solicitarPermissoes() {
+        // Verificar se as permissões já foram concedidas
+        temPermissaoCamera = ContextCompat.checkSelfPermission(
+            this, Manifest.permission.CAMERA
+        ) == PackageManager.PERMISSION_GRANTED
 
-            temPermissaoGaleria = ContextCompat.checkSelfPermission(
-                this, Manifest.permission.READ_MEDIA_IMAGES
-            ) == PackageManager.PERMISSION_GRANTED
+        temPermissaoGaleria = ContextCompat.checkSelfPermission(
+            this, Manifest.permission.READ_MEDIA_IMAGES
+        ) == PackageManager.PERMISSION_GRANTED
 
-            var listaPermissoes = mutableListOf<String>()
-            if (!temPermissaoCamera) {
-                listaPermissoes.add(Manifest.permission.CAMERA)
-            }
-            if (!temPermissaoGaleria) {
-                listaPermissoes.add(Manifest.permission.READ_MEDIA_IMAGES)
-            }
-            val gerenciadorPermissoes = registerForActivityResult(
-                ActivityResultContracts.RequestMultiplePermissions()
-            ) { permissoes ->
-                temPermissaoCamera = permissoes[Manifest.permission.CAMERA] ?: temPermissaoCamera
-                temPermissaoGaleria =
-                    permissoes[Manifest.permission.READ_MEDIA_IMAGES] ?: temPermissaoGaleria
-
-            }
-            if (listaPermissoes.isNotEmpty()) {
-                gerenciadorPermissoes.launch(listaPermissoes.toTypedArray())
-            }
+        var listaPermissoes = mutableListOf<String>()
+        if (!temPermissaoCamera) {
+            listaPermissoes.add(Manifest.permission.CAMERA)
         }
-
-        private fun inicializarToolbar() {
-            val toolbar = binding.includeToolbarPerfil.materialToolbar
-            setSupportActionBar(toolbar)
-            supportActionBar?.setDisplayHomeAsUpEnabled(true)
-            supportActionBar?.apply {
-                title = "Editar Perfil"
-            }
+        if (!temPermissaoGaleria) {
+            listaPermissoes.add(Manifest.permission.READ_MEDIA_IMAGES)
         }
+        val gerenciadorPermissoes = registerForActivityResult(
+            ActivityResultContracts.RequestMultiplePermissions()
+        ) { permissoes ->
+            temPermissaoCamera = permissoes[Manifest.permission.CAMERA] ?: temPermissaoCamera
+            temPermissaoGaleria =
+                permissoes[Manifest.permission.READ_MEDIA_IMAGES] ?: temPermissaoGaleria
 
+        }
+        if (listaPermissoes.isNotEmpty()) {
+            gerenciadorPermissoes.launch(listaPermissoes.toTypedArray())
+        }
     }
+
+    private fun inicializarToolbar() {
+        val toolbar = binding.includeToolbarPerfil.materialToolbar
+        setSupportActionBar(toolbar)
+        supportActionBar?.setDisplayHomeAsUpEnabled(true)
+        supportActionBar?.apply {
+            title = "Editar Perfil"
+        }
+    }
+
+}
