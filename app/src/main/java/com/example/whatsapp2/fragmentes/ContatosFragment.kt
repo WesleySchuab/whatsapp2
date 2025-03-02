@@ -1,5 +1,6 @@
 package com.example.whatsapp2.fragmentes
 
+import android.content.Intent
 import android.os.Bundle
 import android.util.Log
 import androidx.fragment.app.Fragment
@@ -8,10 +9,11 @@ import android.view.View
 import android.view.ViewGroup
 import androidx.recyclerview.widget.DividerItemDecoration
 import androidx.recyclerview.widget.LinearLayoutManager
-import com.example.whatsapp2.R
+import com.example.whatsapp2.activities.MensagensActivity
 import com.example.whatsapp2.adapters.ContatosAdapter
 import com.example.whatsapp2.databinding.FragmentContatosBinding
 import com.example.whatsapp2.model.Usuario
+import com.example.whatsapp2.utils.Constantes
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.ListenerRegistration
@@ -20,6 +22,7 @@ import com.google.firebase.firestore.ListenerRegistration
 class ContatosFragment : Fragment() {
     private lateinit var binding: FragmentContatosBinding
     private lateinit var eventoSnapshot: ListenerRegistration
+
     // Cria um objeto ContatosAdapter
     private lateinit var contatosAdapter: ContatosAdapter
 
@@ -39,7 +42,13 @@ class ContatosFragment : Fragment() {
         binding = FragmentContatosBinding.inflate(inflater, container, false)
 
         //Instancia o adapter
-        contatosAdapter = ContatosAdapter()
+        contatosAdapter = ContatosAdapter { usuario ->
+            // Cria um Intent para abrir a tela de mensagens
+            val intent = Intent(context, MensagensActivity::class.java)
+            intent.putExtra("dadosDestinatario", usuario)
+            intent.putExtra("origem", Constantes.ORIGEM_CONTATO)
+            startActivity(intent)
+        }
         // Configura o RecyclerView com o adapter
         binding.rvContatos.adapter = contatosAdapter
         // Configura o layout manager como um LinearLayoutManager
@@ -81,7 +90,7 @@ class ContatosFragment : Fragment() {
                     }
                 }
                 // Passa a lista de contatos para o adapter
-                if(listaContatos.isNotEmpty()){
+                if (listaContatos.isNotEmpty()) {
                     contatosAdapter.adicionarLista(listaContatos)
                 }
             }
