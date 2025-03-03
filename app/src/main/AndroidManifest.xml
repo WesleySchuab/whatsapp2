@@ -22,6 +22,7 @@
         tools:targetApi="31">
         <activity
             android:name=".activities.MensagensActivity"
+            android:parentActivityName=".activities.MainActivity"
             android:exported="false" />
         <activity
             android:name=".activities.PerfilActivity"
