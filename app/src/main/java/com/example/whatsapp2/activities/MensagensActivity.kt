@@ -2,14 +2,21 @@ package com.example.whatsapp2.activities
 
 import android.os.Build
 import android.os.Bundle
+import android.util.Log
 import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
 import com.example.whatsapp2.R
 import com.example.whatsapp2.databinding.ActivityMensagensBinding
+import com.example.whatsapp2.model.Mensagem
 import com.example.whatsapp2.model.Usuario
 import com.example.whatsapp2.utils.Constantes
+import com.example.whatsapp2.utils.exibirMensagem
+import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.firestore.FirebaseFirestore
+import com.google.firebase.firestore.ListenerRegistration
+import com.google.firebase.firestore.Query
 import com.squareup.picasso.Picasso
 
 class MensagensActivity : AppCompatActivity() {
@@ -17,6 +24,14 @@ class MensagensActivity : AppCompatActivity() {
     private val binding by lazy {
         ActivityMensagensBinding.inflate(layoutInflater)
     }
+    private val firebaseAuth by lazy {
+        FirebaseAuth.getInstance()
+    }
+    private val firestore by lazy {
+        FirebaseFirestore.getInstance()
+    }
+
+    private lateinit var listenerRegistration: ListenerRegistration
 
     private var dadosDestinatario: Usuario? = null
 
@@ -24,8 +39,11 @@ class MensagensActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
         setContentView(binding.root)
+
         recuperarDadosDestinatario()
         inicializarToolbar()
+        inicializarEventosDeClique()
+        inicializarListeners()
 
         ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.main)) { v, insets ->
             val systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars())
@@ -34,10 +52,90 @@ class MensagensActivity : AppCompatActivity() {
         }
     }
 
+    override fun onDestroy() {
+        super.onDestroy()
+        listenerRegistration.remove()
+    }
+
+    private fun inicializarListeners() {
+        val idUsuarioRemetente = firebaseAuth.currentUser?.uid
+        val idUsuarioDestinatario = dadosDestinatario?.id
+
+        if (idUsuarioRemetente != null && idUsuarioDestinatario != null) {
+            listenerRegistration = firestore
+                .collection(Constantes.MENSAGENS)
+                .document(idUsuarioRemetente)
+                .collection(idUsuarioDestinatario)
+                .orderBy("data", Query.Direction.ASCENDING)
+                .addSnapshotListener { querySnapshot, error ->
+                    if (error != null) {
+                        exibirMensagem("Erro ao carregar mensagens")
+                    }
+
+                    val listaMensagens = mutableListOf<Mensagem>()
+                    val documentos = querySnapshot?.documents
+                    documentos?.forEach { documentSnapshot ->
+                        val mensagem = documentSnapshot.toObject(Mensagem::class.java)
+                        if (mensagem != null) {
+                            listaMensagens.add(mensagem)
+                            Log.i("ListenerMensagem", mensagem.mensagem)
+                        }
+                    }
+                    if (listaMensagens.isNotEmpty()) {
+                        // Adapter
+                    }
+                }
+        }
+    }
+
+    private fun inicializarEventosDeClique() {
+        binding.fabEnviar.setOnClickListener {
+            // Enviar mensagem
+            val mensagem = binding.editMensagem.text.toString()
+            if (mensagem.isNotEmpty()) {
+                salvarMensagem(mensagem)
+            }
+        }
+    }
+
+    private fun salvarMensagem(textoMensagem: String) {
+        if (textoMensagem.isNotEmpty()) {
+            val idUsuarioRemetente = firebaseAuth.currentUser?.uid
+            val idUsuarioDestinatario = dadosDestinatario?.id
+            if (idUsuarioRemetente != null && idUsuarioDestinatario != null) {
+                val mensagem = Mensagem(
+                    idUsuario = idUsuarioRemetente,
+                    mensagem = textoMensagem
+                )
+                // Salvar mensagem para o remetente
+                salvarMensagemFirestore(mensagem, idUsuarioRemetente, idUsuarioDestinatario)
+
+                // Salvar mensagem para o destinatário
+                salvarMensagemFirestore(mensagem, idUsuarioDestinatario, idUsuarioRemetente)
+            }
+        }
+    }
+
+    private fun salvarMensagemFirestore(
+        mensagem: Mensagem,
+        idUsuarioRemetente: String,
+        idUsuarioDestinatario: String
+    ) {
+        firestore
+            .collection(Constantes.MENSAGENS)
+            .document(idUsuarioRemetente)
+            .collection(idUsuarioDestinatario)
+            .add(mensagem)
+            .addOnFailureListener() {
+                exibirMensagem("Erro ao enviar mensagem")
+            }
+        binding.editMensagem.setText("")
+    }
+
     private fun inicializarToolbar() {
         val toolbar = binding.tbMensagens
         setSupportActionBar(toolbar)
-        supportActionBar?.apply{
+        supportActionBar?.apply {
             title = ""
             if (dadosDestinatario != null) {
                 binding.textMensagemNome.text = dadosDestinatario!!.nome
