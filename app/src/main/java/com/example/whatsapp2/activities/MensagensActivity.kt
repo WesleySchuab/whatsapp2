@@ -7,7 +7,9 @@ import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
+import androidx.recyclerview.widget.LinearLayoutManager
 import com.example.whatsapp2.R
+import com.example.whatsapp2.adapters.ConversasAdapter
 import com.example.whatsapp2.databinding.ActivityMensagensBinding
 import com.example.whatsapp2.model.Mensagem
 import com.example.whatsapp2.model.Usuario
@@ -35,6 +37,8 @@ class MensagensActivity : AppCompatActivity() {
 
     private var dadosDestinatario: Usuario? = null
 
+    private lateinit var conversasAdapter: ConversasAdapter
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
@@ -43,12 +47,21 @@ class MensagensActivity : AppCompatActivity() {
         recuperarDadosDestinatario()
         inicializarToolbar()
         inicializarEventosDeClique()
+        inicializarRecyclerView()
         inicializarListeners()
 
         ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.main)) { v, insets ->
             val systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars())
             v.setPadding(systemBars.left, systemBars.top, systemBars.right, systemBars.bottom)
             insets
+        }
+    }
+
+    private fun inicializarRecyclerView() {
+        with(binding) {
+            conversasAdapter = ConversasAdapter()
+            rvMensagens.adapter = conversasAdapter
+            rvMensagens.layoutManager = LinearLayoutManager(applicationContext)
         }
     }
 
@@ -83,6 +96,7 @@ class MensagensActivity : AppCompatActivity() {
                     }
                     if (listaMensagens.isNotEmpty()) {
                         // Adapter
+                        conversasAdapter.adicionarLista(listaMensagens)
                     }
                 }
         }
