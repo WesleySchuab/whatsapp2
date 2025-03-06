@@ -11,6 +11,7 @@ import androidx.recyclerview.widget.LinearLayoutManager
 import com.example.whatsapp2.R
 import com.example.whatsapp2.adapters.ConversasAdapter
 import com.example.whatsapp2.databinding.ActivityMensagensBinding
+import com.example.whatsapp2.model.Conversa
 import com.example.whatsapp2.model.Mensagem
 import com.example.whatsapp2.model.Usuario
 import com.example.whatsapp2.utils.Constantes
@@ -36,6 +37,7 @@ class MensagensActivity : AppCompatActivity() {
     private lateinit var listenerRegistration: ListenerRegistration
 
     private var dadosDestinatario: Usuario? = null
+    private var dadosUsuarioRemetente: Usuario? = null
 
     private lateinit var conversasAdapter: ConversasAdapter
 
@@ -44,7 +46,7 @@ class MensagensActivity : AppCompatActivity() {
         enableEdgeToEdge()
         setContentView(binding.root)
 
-        recuperarDadosDestinatario()
+        recuperarDadosUsuarios()
         inicializarToolbar()
         inicializarEventosDeClique()
         inicializarRecyclerView()
@@ -116,6 +118,8 @@ class MensagensActivity : AppCompatActivity() {
         if (textoMensagem.isNotEmpty()) {
             val idUsuarioRemetente = firebaseAuth.currentUser?.uid
             val idUsuarioDestinatario = dadosDestinatario?.id
+            // idUsuarioRemetente e idUsuarioDestinatario podem ser subistituido
+            // por dadosDestinatario e dadosUsuarioRemetente
             if (idUsuarioRemetente != null && idUsuarioDestinatario != null) {
                 val mensagem = Mensagem(
                     idUsuario = idUsuarioRemetente,
@@ -126,8 +130,42 @@ class MensagensActivity : AppCompatActivity() {
 
                 // Salvar mensagem para o destinatário
                 salvarMensagemFirestore(mensagem, idUsuarioDestinatario, idUsuarioRemetente)
+
+                // O usuário que está logado precisa salvar na conversa
+            // nome e foto do destinatário
+                val conversaRemetente = Conversa(
+                     idUsuarioRemetente,
+                     idUsuarioDestinatario,
+                     dadosDestinatario!!.foto,
+                    dadosDestinatario!!.nome,
+                   textoMensagem
+                )
+                // O usuário destinatário precisa salvar na conversa nome foto do remetente
+            val conversaDestinatario = Conversa(
+                idUsuarioDestinatario,
+                idUsuarioRemetente,
+                dadosUsuarioRemetente!!.foto,
+                dadosUsuarioRemetente!!.nome,
+                textoMensagem
+            )
+                salvarConversaFirestore(conversaDestinatario)
+                salvarConversaFirestore(conversaRemetente)
             }
         }
+    }
+
+    private fun salvarConversaFirestore(conversa: Conversa) {
+        firestore
+            .collection(Constantes.CONVERSAS)
+            .document(conversa.idusuarioRemetente)
+            .collection(Constantes.ULTIMAS_CONVERSAS)
+            .document(conversa.idUsuarioDestinatario)
+            .set(conversa)
+            .addOnFailureListener {
+                exibirMensagem("Erro ao salvar conversa")
+            }
+
+
     }
 
     private fun salvarMensagemFirestore(
@@ -161,7 +199,22 @@ class MensagensActivity : AppCompatActivity() {
         supportActionBar?.setDisplayHomeAsUpEnabled(true)
     }
 
-    private fun recuperarDadosDestinatario() {
+    private fun recuperarDadosUsuarios() {
+        // dados do remetente
+        val idUsuarioLogado = firebaseAuth.currentUser?.uid
+        if (idUsuarioLogado != null){
+            firestore
+                .collection(Constantes.USUARIOS)
+                .document(idUsuarioLogado)
+                .get()
+                .addOnSuccessListener { documentSnapshot ->
+                    val usuario = documentSnapshot.toObject(Usuario::class.java)
+                    if (usuario != null) {
+                        dadosUsuarioRemetente = usuario
+                    }
+                }
+        }
+
         val extras = intent.extras
         if (extras != null) {
             val origem = extras.getString("origem")
