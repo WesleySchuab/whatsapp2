@@ -9,7 +9,7 @@ import com.example.whatsapp2.model.Mensagem
 import com.example.whatsapp2.utils.Constantes
 import com.google.firebase.auth.FirebaseAuth
 
-class ConversasAdapter : RecyclerView.Adapter<RecyclerView.ViewHolder>() {
+class MensagensAdapter : RecyclerView.Adapter<RecyclerView.ViewHolder>() {
 
     private var listaMensagens = emptyList<Mensagem>()
     fun adicionarLista(lista: List<Mensagem>) {

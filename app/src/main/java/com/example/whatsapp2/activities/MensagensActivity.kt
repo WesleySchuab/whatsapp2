@@ -9,7 +9,7 @@ import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.example.whatsapp2.R
-import com.example.whatsapp2.adapters.ConversasAdapter
+import com.example.whatsapp2.adapters.MensagensAdapter
 import com.example.whatsapp2.databinding.ActivityMensagensBinding
 import com.example.whatsapp2.model.Conversa
 import com.example.whatsapp2.model.Mensagem
@@ -39,7 +39,7 @@ class MensagensActivity : AppCompatActivity() {
     private var dadosDestinatario: Usuario? = null
     private var dadosUsuarioRemetente: Usuario? = null
 
-    private lateinit var conversasAdapter: ConversasAdapter
+    private lateinit var mensagensAdapter: MensagensAdapter
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -61,8 +61,8 @@ class MensagensActivity : AppCompatActivity() {
 
     private fun inicializarRecyclerView() {
         with(binding) {
-            conversasAdapter = ConversasAdapter()
-            rvMensagens.adapter = conversasAdapter
+            mensagensAdapter = MensagensAdapter()
+            rvMensagens.adapter = mensagensAdapter
             rvMensagens.layoutManager = LinearLayoutManager(applicationContext)
         }
     }
@@ -98,7 +98,7 @@ class MensagensActivity : AppCompatActivity() {
                     }
                     if (listaMensagens.isNotEmpty()) {
                         // Adapter
-                        conversasAdapter.adicionarLista(listaMensagens)
+                        mensagensAdapter.adicionarLista(listaMensagens)
                     }
                 }
         }
