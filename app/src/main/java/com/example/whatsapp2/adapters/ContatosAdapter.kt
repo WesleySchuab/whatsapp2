@@ -9,7 +9,11 @@ import com.example.whatsapp2.model.Usuario
 import com.squareup.picasso.Picasso
 
 // Classe que representa o adapter do RecyclerView
-class ContatosAdapter : Adapter<ContatosAdapter.ContatosViewHolder>() {
+class ContatosAdapter(
+    private val onClick: (Usuario) -> Unit
+
+) : Adapter<ContatosAdapter.ContatosViewHolder>() {
+
     private var listaContatos = emptyList<Usuario>()
     fun adicionarLista(lista: List<Usuario>) {
         listaContatos = lista
@@ -29,6 +33,10 @@ class ContatosAdapter : Adapter<ContatosAdapter.ContatosViewHolder>() {
                 .get()
                 .load(usuario.foto)
                 .into(binding.imageContatoFoto)
+
+            binding.clItemContato.setOnClickListener {
+                onClick(usuario)
+            }
 
         }
     }

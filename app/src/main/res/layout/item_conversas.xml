@@ -2,14 +2,14 @@
 <androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
-    android:id="@+id/clItemContato"
+    android:id="@+id/clItemConversa"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:paddingTop="8dp"
     android:paddingBottom="8dp">
 
     <com.google.android.material.imageview.ShapeableImageView
-        android:id="@+id/imageContatoFoto"
+        android:id="@+id/imageConversaFoto"
         android:layout_width="50dp"
         android:layout_height="50dp"
         android:scaleType="centerCrop"
@@ -21,12 +21,27 @@
         app:srcCompat="@drawable/perfil" />
 
     <TextView
-        android:id="@+id/textContatoNome"
+        android:id="@+id/textConversaNome"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginStart="16dp"
+        android:layout_marginStart="8dp"
+        android:text="Emily"
+        android:textSize="16sp"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="0.0"
+        app:layout_constraintStart_toEndOf="@+id/imageConversaFoto"
+        app:layout_constraintTop_toTopOf="@+id/imageConversaFoto" />
+
+    <TextView
+        android:id="@+id/textConversaMensagem"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="8dp"
         android:text="TextView"
-        app:layout_constraintBottom_toBottomOf="@+id/imageContatoFoto"
-        app:layout_constraintStart_toEndOf="@+id/imageContatoFoto"
-        app:layout_constraintTop_toTopOf="@+id/imageContatoFoto" />
+        android:textSize="12sp"
+        app:layout_constraintBottom_toBottomOf="@+id/imageConversaFoto"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="0.0"
+        app:layout_constraintStart_toEndOf="@+id/imageConversaFoto"
+        app:layout_constraintTop_toBottomOf="@+id/textConversaNome" />
 </androidx.constraintlayout.widget.ConstraintLayout>
