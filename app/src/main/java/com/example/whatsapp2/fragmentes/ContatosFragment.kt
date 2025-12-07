@@ -22,8 +22,6 @@ import com.google.firebase.firestore.ListenerRegistration
 class ContatosFragment : Fragment() {
     private lateinit var binding: FragmentContatosBinding
     private lateinit var eventoSnapshot: ListenerRegistration
-
-    // Cria um objeto ContatosAdapter
     private lateinit var contatosAdapter: ContatosAdapter
 
     private val firebaseAuth by lazy {
@@ -33,34 +31,26 @@ class ContatosFragment : Fragment() {
         FirebaseFirestore.getInstance()
     }
 
-
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
         savedInstanceState: Bundle?
-    ): View? {
-        // Inflate the layout for this fragment
+    ): View {
         binding = FragmentContatosBinding.inflate(inflater, container, false)
-
-        //Instancia o adapter
+        
         contatosAdapter = ContatosAdapter { usuario ->
-            // Cria um Intent para abrir a tela de mensagens
             val intent = Intent(context, MensagensActivity::class.java)
             intent.putExtra("dadosDestinatario", usuario)
             intent.putExtra("origem", Constantes.ORIGEM_CONTATO)
             startActivity(intent)
         }
-        // Configura o RecyclerView com o adapter
+        
         binding.rvContatos.adapter = contatosAdapter
-        // Configura o layout manager como um LinearLayoutManager
         binding.rvContatos.layoutManager = LinearLayoutManager(context)
-        // Adiciona um divisor entre os itens do RecyclerView
         binding.rvContatos.addItemDecoration(
-            DividerItemDecoration(
-                context, LinearLayoutManager.VERTICAL
-            )
+            DividerItemDecoration(context, LinearLayoutManager.VERTICAL)
         )
+        
         return binding.root
-        //return inflater.inflate(R.layout.fragment_contatos, container, false)
     }
 
     override fun onStart() {
@@ -70,26 +60,25 @@ class ContatosFragment : Fragment() {
 
     private fun adicionarListenerContatos() {
         eventoSnapshot = firestore
-            .collection("usuarios")
+            .collection(Constantes.USUARIOS)
             .addSnapshotListener { querySnapshot, erro ->
+                if (erro != null) {
+                    Log.e("ContatosFragment", "Erro: ${erro.message}")
+                    return@addSnapshotListener
+                }
 
-                val documento = querySnapshot?.documents
                 val listaContatos = mutableListOf<Usuario>()
+                val idUsuario = firebaseAuth.currentUser?.uid
 
-                documento?.forEach { documentSnapshot ->
-
+                querySnapshot?.documents?.forEach { documentSnapshot ->
                     val usuario = documentSnapshot.toObject(Usuario::class.java)
-                    val idUsuario = firebaseAuth.currentUser?.uid
-
                     if (usuario != null && idUsuario != null) {
-                        if (usuario.id != firebaseAuth.currentUser?.uid) {
-                            Log.i("ContatosFragment", "adicionarListenerContatos: ${usuario.nome} ")
+                        if (usuario.id != idUsuario) {
                             listaContatos.add(usuario)
-                            //binding.recyclerContatos.adapter = ContatosAdapter(listaContatos)
                         }
                     }
                 }
-                // Passa a lista de contatos para o adapter
+                
                 if (listaContatos.isNotEmpty()) {
                     contatosAdapter.adicionarLista(listaContatos)
                 }

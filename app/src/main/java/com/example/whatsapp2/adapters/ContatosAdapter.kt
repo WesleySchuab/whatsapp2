@@ -29,15 +29,16 @@ class ContatosAdapter(
         fun bind(usuario: Usuario) {
             // Faz a conexão com o layout e exibe o conteúdo
             binding.textContatoNome.text = usuario.nome
-            Picasso
-                .get()
-                .load(usuario.foto)
-                .into(binding.imageContatoFoto)
+            
+            if (usuario.foto.isNotEmpty()) {
+                Picasso.get()
+                    .load(usuario.foto)
+                    .into(binding.imageContatoFoto)
+            }
 
             binding.clItemContato.setOnClickListener {
                 onClick(usuario)
             }
-
         }
     }
 

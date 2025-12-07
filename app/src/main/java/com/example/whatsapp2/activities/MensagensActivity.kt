@@ -208,10 +208,17 @@ class MensagensActivity : AppCompatActivity() {
                 .document(idUsuarioLogado)
                 .get()
                 .addOnSuccessListener { documentSnapshot ->
-                    val usuario = documentSnapshot.toObject(Usuario::class.java)
-                    if (usuario != null) {
-                        dadosUsuarioRemetente = usuario
+                    try {
+                        val usuario = documentSnapshot.toObject(Usuario::class.java)
+                        if (usuario != null) {
+                            dadosUsuarioRemetente = usuario
+                        }
+                    } catch (e: Exception) {
+                        Log.e("MensagensActivity", "Erro ao converter documento para Usuario: ${e.message}", e)
                     }
+                }
+                .addOnFailureListener { exception ->
+                    Log.e("MensagensActivity", "Erro ao buscar dados do usuário: ${exception.message}", exception)
                 }
         }
 
@@ -219,13 +226,17 @@ class MensagensActivity : AppCompatActivity() {
         if (extras != null) {
             val origem = extras.getString("origem")
             if (origem == Constantes.ORIGEM_CONTATO) {
-                dadosDestinatario = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-                    extras.getParcelable("dadosDestinatario", Usuario::class.java)
-                } else {
-                    extras.getParcelable("dadosDestinatario")
+                try {
+                    dadosDestinatario = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                        extras.getParcelable("dadosDestinatario", Usuario::class.java)
+                    } else {
+                        extras.getParcelable("dadosDestinatario")
+                    }
+                    Log.i("MensagensActivity", "Dados do destinatário carregados: ${dadosDestinatario?.nome}")
+                } catch (e: Exception) {
+                    Log.e("MensagensActivity", "Erro ao recuperar dados do destinatário: ${e.message}", e)
                 }
             }
-
         }
     }
 }
