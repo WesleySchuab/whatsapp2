@@ -39,7 +39,7 @@ class MensagensActivity : AppCompatActivity() {
     private var dadosDestinatario: Usuario? = null
     private var dadosUsuarioRemetente: Usuario? = null
 
-    private lateinit var conversasAdapter: ConversasAdapter
+    private lateinit var mensagensAdapter: ConversasAdapter
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -61,8 +61,8 @@ class MensagensActivity : AppCompatActivity() {
 
     private fun inicializarRecyclerView() {
         with(binding) {
-            conversasAdapter = ConversasAdapter()
-            rvMensagens.adapter = conversasAdapter
+            mensagensAdapter = ConversasAdapter()
+            rvMensagens.adapter = mensagensAdapter
             rvMensagens.layoutManager = LinearLayoutManager(applicationContext)
         }
     }
@@ -98,7 +98,7 @@ class MensagensActivity : AppCompatActivity() {
                     }
                     if (listaMensagens.isNotEmpty()) {
                         // Adapter
-                        conversasAdapter.adicionarLista(listaMensagens)
+                        mensagensAdapter.adicionarLista(listaMensagens)
                     }
                 }
         }
@@ -224,18 +224,15 @@ class MensagensActivity : AppCompatActivity() {
 
         val extras = intent.extras
         if (extras != null) {
-            val origem = extras.getString("origem")
-            if (origem == Constantes.ORIGEM_CONTATO) {
-                try {
-                    dadosDestinatario = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-                        extras.getParcelable("dadosDestinatario", Usuario::class.java)
-                    } else {
-                        extras.getParcelable("dadosDestinatario")
-                    }
-                    Log.i("MensagensActivity", "Dados do destinatário carregados: ${dadosDestinatario?.nome}")
-                } catch (e: Exception) {
-                    Log.e("MensagensActivity", "Erro ao recuperar dados do destinatário: ${e.message}", e)
+            try {
+                dadosDestinatario = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                    extras.getParcelable("dadosDestinatario", Usuario::class.java)
+                } else {
+                    extras.getParcelable("dadosDestinatario")
                 }
+                Log.i("MensagensActivity", "Dados do destinatário carregados: ${dadosDestinatario?.nome}")
+            } catch (e: Exception) {
+                Log.e("MensagensActivity", "Erro ao recuperar dados do destinatário: ${e.message}", e)
             }
         }
     }

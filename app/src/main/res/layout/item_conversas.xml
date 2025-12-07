@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/clItemConversa"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:paddingTop="8dp"
+    android:paddingBottom="8dp">
+
+    <com.google.android.material.imageview.ShapeableImageView
+        android:id="@+id/imageConversaFoto"
+        android:layout_width="50dp"
+        android:layout_height="50dp"
+        android:scaleType="centerCrop"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:shapeAppearanceOverlay="@style/Circulo"
+        app:srcCompat="@drawable/perfil" />
+
+    <TextView
+        android:id="@+id/textConversaNome"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="12dp"
+        android:ellipsize="end"
+        android:maxLines="1"
+        android:textSize="16sp"
+        android:textStyle="bold"
+        app:layout_constraintTop_toTopOf="@+id/imageConversaFoto"
+        app:layout_constraintStart_toEndOf="@+id/imageConversaFoto"
+        app:layout_constraintEnd_toEndOf="parent"
+        tools:text="Nome do contato" />
+
+    <TextView
+        android:id="@+id/textConversaUltimaMensagem"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="12dp"
+        android:layout_marginTop="4dp"
+        android:ellipsize="end"
+        android:maxLines="1"
+        android:textColor="@android:color/darker_gray"
+        android:textSize="14sp"
+        app:layout_constraintTop_toBottomOf="@+id/textConversaNome"
+        app:layout_constraintBottom_toBottomOf="@+id/imageConversaFoto"
+        app:layout_constraintStart_toEndOf="@+id/imageConversaFoto"
+        app:layout_constraintEnd_toEndOf="parent"
+        tools:text="Pré-visualização da última mensagem" />
+
+</androidx.constraintlayout.widget.ConstraintLayout>
