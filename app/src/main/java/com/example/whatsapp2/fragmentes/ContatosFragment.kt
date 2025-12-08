@@ -9,6 +9,7 @@ import android.view.View
 import android.view.ViewGroup
 import androidx.recyclerview.widget.DividerItemDecoration
 import androidx.recyclerview.widget.LinearLayoutManager
+import com.example.whatsapp2.activities.AdicionarContatoHelper
 import com.example.whatsapp2.activities.MensagensActivity
 import com.example.whatsapp2.adapters.ContatosAdapter
 import com.example.whatsapp2.databinding.FragmentContatosBinding
@@ -23,6 +24,7 @@ class ContatosFragment : Fragment() {
     private lateinit var binding: FragmentContatosBinding
     private lateinit var eventoSnapshot: ListenerRegistration
     private lateinit var contatosAdapter: ContatosAdapter
+    private lateinit var adicionarContatoHelper: AdicionarContatoHelper
 
     private val firebaseAuth by lazy {
         FirebaseAuth.getInstance()
@@ -37,6 +39,8 @@ class ContatosFragment : Fragment() {
     ): View {
         binding = FragmentContatosBinding.inflate(inflater, container, false)
         
+        adicionarContatoHelper = AdicionarContatoHelper(requireActivity() as androidx.appcompat.app.AppCompatActivity)
+        
         contatosAdapter = ContatosAdapter { usuario ->
             val intent = Intent(context, MensagensActivity::class.java)
             intent.putExtra("dadosDestinatario", usuario)
@@ -50,6 +54,11 @@ class ContatosFragment : Fragment() {
             DividerItemDecoration(context, LinearLayoutManager.VERTICAL)
         )
         
+        // Configurar FAB para adicionar contato
+        binding.fabAdicionarContato.setOnClickListener {
+            adicionarContatoHelper.mostrarDialogAdicionarContato()
+        }
+        
         return binding.root
     }
 
@@ -59,8 +68,17 @@ class ContatosFragment : Fragment() {
     }
 
     private fun adicionarListenerContatos() {
+        val idUsuario = firebaseAuth.currentUser?.uid
+        
+        if (idUsuario == null) {
+            Log.e("ContatosFragment", "Usuário não autenticado")
+            return
+        }
+        
         eventoSnapshot = firestore
-            .collection(Constantes.USUARIOS)
+            .collection(Constantes.CONTATOS)
+            .document(idUsuario)
+            .collection("meus_contatos")
             .addSnapshotListener { querySnapshot, erro ->
                 if (erro != null) {
                     Log.e("ContatosFragment", "Erro: ${erro.message}")
@@ -68,20 +86,21 @@ class ContatosFragment : Fragment() {
                 }
 
                 val listaContatos = mutableListOf<Usuario>()
-                val idUsuario = firebaseAuth.currentUser?.uid
 
                 querySnapshot?.documents?.forEach { documentSnapshot ->
-                    val usuario = documentSnapshot.toObject(Usuario::class.java)
-                    if (usuario != null && idUsuario != null) {
-                        if (usuario.id != idUsuario) {
-                            listaContatos.add(usuario)
-                        }
+                    val usuario = Usuario(
+                        id = documentSnapshot.getString("id") ?: "",
+                        nome = documentSnapshot.getString("nome") ?: "",
+                        email = documentSnapshot.getString("email") ?: "",
+                        foto = documentSnapshot.getString("foto") ?: ""
+                    )
+                    
+                    if (usuario.id.isNotEmpty()) {
+                        listaContatos.add(usuario)
                     }
                 }
                 
-                if (listaContatos.isNotEmpty()) {
-                    contatosAdapter.adicionarLista(listaContatos)
-                }
+                contatosAdapter.adicionarLista(listaContatos)
             }
     }
 
