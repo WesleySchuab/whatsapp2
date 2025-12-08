@@ -1,77 +1,67 @@
 package com.example.whatsapp2.adapters
 
-import com.example.whatsapp2.databinding.ItensMensagensDestinarioBinding
 import android.view.LayoutInflater
 import android.view.ViewGroup
 import androidx.recyclerview.widget.RecyclerView
-import com.example.whatsapp2.databinding.ItensMensagensRemetenteBinding
-import com.example.whatsapp2.model.Mensagem
-import com.example.whatsapp2.utils.Constantes
-import com.google.firebase.auth.FirebaseAuth
+import androidx.recyclerview.widget.RecyclerView.Adapter
+import com.example.whatsapp2.databinding.ItemConversasBinding
+import com.example.whatsapp2.model.Conversa
+import com.squareup.picasso.Picasso
 
-class ConversasAdapter : RecyclerView.Adapter<RecyclerView.ViewHolder>() {
+class ConversasAdapter(
+    private val onClick: (Conversa) -> Unit
 
-    private var listaMensagens = emptyList<Mensagem>()
-    fun adicionarLista(lista: List<Mensagem>) {
-        listaMensagens = lista
+) : Adapter<ConversasAdapter.ConversasViewHolder>()  {
+
+    private var listaConversas = emptyList<Conversa>()
+    fun adicionarLista(lista: List<Conversa>) {
+        listaConversas = lista
         notifyDataSetChanged()
     }
-
-    class MensagensRemetenteViewHolder(
-        private val binding: ItensMensagensRemetenteBinding
+    // Classe interna que representa um ViewHolder deve ser passado uma visualização
+    inner class ConversasViewHolder(
+        // Recebe a visualização
+        private val binding: ItemConversasBinding
     ) : RecyclerView.ViewHolder(binding.root) {
-        fun bind(mensagem: Mensagem) {
-            binding.textMensagemRemetente.text = mensagem.mensagem
-        }
-    }
+        // Método que é executado quando o ViewHolder é criado fazendo a conexão com a interface
+        fun bind(conversa: Conversa) {
+            // Faz a conexão com o layout e exibe o conteúdo
+            binding.textConversaNome.text = conversa.nome
+            binding.textConversaMensagem.text = conversa.ultimaMensagem
+            Picasso
+                .get()
+                .load(conversa.foto)
+                .into(binding.imageConversaFoto)
 
-    class MensagensDestinatarioViewHolder(
-        private val binding: ItensMensagensDestinarioBinding
-    ) : RecyclerView.ViewHolder(binding.root) {
-        fun bind(mensagem: Mensagem) {
-            binding.textMensagemDestinatario.text = mensagem.mensagem
-        }
-    }
-
-    override fun getItemViewType(position: Int): Int {
-        val mensagem = listaMensagens[position]
-        val idUsuarioLogado = FirebaseAuth.getInstance().currentUser?.uid
-        if (idUsuarioLogado == mensagem.idUsuario) {
-            return Constantes.TIPO_REMTENTE
-        }
-        return Constantes.TIPO_DESTINATARIO
-    }
-
-    override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): RecyclerView.ViewHolder {
-        if (viewType == Constantes.TIPO_REMTENTE) {
-            val inflater = LayoutInflater.from(parent.context)
-            val itemView = ItensMensagensRemetenteBinding.inflate(
-                inflater, parent, false
-            )
-            return MensagensRemetenteViewHolder(itemView)
-        } else {
-            val inflater = LayoutInflater.from(parent.context)
-            val itemView = ItensMensagensDestinarioBinding.inflate(
-                inflater, parent, false
-            )
-            return MensagensDestinatarioViewHolder(itemView)
-        }
-
-    }
-
-    override fun onBindViewHolder(holder: RecyclerView.ViewHolder, position: Int) {
-        when (holder) {
-            is MensagensRemetenteViewHolder -> {
-                holder.bind(listaMensagens[position])
+            binding.clItemConversa.setOnClickListener {
+                onClick(conversa)
             }
 
-            is MensagensDestinatarioViewHolder -> {
-                holder.bind(listaMensagens[position])
-            }
         }
+    }
+
+    override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ConversasViewHolder {
+        // Infla o layout do item de contato
+        // Cria uma instancia de ContatosViewHolder passando a visualização
+        //Precisa de um itemContatosBinding
+
+        //Recuperar o inflater do parent
+        val inflater = LayoutInflater.from(parent.context)
+        // criar o binding
+        val itemView = ItemConversasBinding.inflate(
+            inflater, parent, false
+        )
+        return ConversasViewHolder(itemView)
+    }
+
+    override fun onBindViewHolder(holder: ConversasViewHolder, position: Int) {
+        val conversa = listaConversas[position]
+        // Passa o usuário para o ViewHolder na função bind do ViewHolder
+        holder.bind(conversa)
+
     }
 
     override fun getItemCount(): Int {
-        return listaMensagens.size
+        return listaConversas.size
     }
 }
