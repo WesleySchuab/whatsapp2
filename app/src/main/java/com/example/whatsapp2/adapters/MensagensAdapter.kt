@@ -1,0 +1,96 @@
+package com.example.whatsapp2.adapters
+
+import android.view.LayoutInflater
+import android.view.ViewGroup
+import android.widget.Toast
+import androidx.recyclerview.widget.RecyclerView
+import com.example.whatsapp2.databinding.ItensMensagensDestinarioBinding
+import com.example.whatsapp2.databinding.ItensMensagensRemetenteBinding
+import com.example.whatsapp2.model.Mensagem
+import com.google.firebase.auth.FirebaseAuth
+
+class MensagensAdapter(
+    private val onDelete: ((Mensagem) -> Unit)? = null
+) : RecyclerView.Adapter<RecyclerView.ViewHolder>() {
+
+    private var listaMensagens = mutableListOf<Mensagem>()
+    private val idUsuarioRemetente = FirebaseAuth.getInstance().currentUser?.uid
+
+    companion object {
+        private const val TIPO_REMETENTE = 0
+        private const val TIPO_DESTINATARIO = 1
+    }
+
+    fun adicionarLista(lista: MutableList<Mensagem>) {
+        listaMensagens = lista
+        notifyDataSetChanged()
+    }
+
+    inner class MensagensRemetenteViewHolder(
+        private val binding: ItensMensagensRemetenteBinding
+    ) : RecyclerView.ViewHolder(binding.root) {
+        fun bind(mensagem: Mensagem) {
+            binding.textMensagemRemetente.text = mensagem.mensagem
+            
+            binding.textMensagemRemetente.setOnClickListener {
+                Toast.makeText(it.context, "Clicou na mensagem!", Toast.LENGTH_SHORT).show()
+                onDelete?.invoke(mensagem)
+            }
+            
+            binding.textMensagemRemetente.setOnLongClickListener {
+                Toast.makeText(it.context, "Long click detectado!", Toast.LENGTH_SHORT).show()
+                onDelete?.invoke(mensagem)
+                true
+            }
+        }
+    }
+
+    inner class MensagensDestinatarioViewHolder(
+        private val binding: ItensMensagensDestinarioBinding
+    ) : RecyclerView.ViewHolder(binding.root) {
+        fun bind(mensagem: Mensagem) {
+            binding.textMensagemDestinatario.text = mensagem.mensagem
+            
+            binding.textMensagemDestinatario.setOnClickListener {
+                Toast.makeText(it.context, "Clicou na mensagem!", Toast.LENGTH_SHORT).show()
+                onDelete?.invoke(mensagem)
+            }
+            
+            binding.textMensagemDestinatario.setOnLongClickListener {
+                Toast.makeText(it.context, "Long click detectado!", Toast.LENGTH_SHORT).show()
+                onDelete?.invoke(mensagem)
+                true
+            }
+        }
+    }
+
+    override fun getItemCount(): Int = listaMensagens.size
+
+    override fun getItemViewType(position: Int): Int {
+        val mensagem = listaMensagens[position]
+        return if (mensagem.idUsuario == idUsuarioRemetente) {
+            TIPO_REMETENTE
+        } else {
+            TIPO_DESTINATARIO
+        }
+    }
+
+    override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): RecyclerView.ViewHolder {
+        val inflater = LayoutInflater.from(parent.context)
+        return if (viewType == TIPO_REMETENTE) {
+            val binding = ItensMensagensRemetenteBinding.inflate(inflater, parent, false)
+            MensagensRemetenteViewHolder(binding)
+        } else {
+            val binding = ItensMensagensDestinarioBinding.inflate(inflater, parent, false)
+            MensagensDestinatarioViewHolder(binding)
+        }
+    }
+
+    override fun onBindViewHolder(holder: RecyclerView.ViewHolder, position: Int) {
+        val mensagem = listaMensagens[position]
+        when (holder) {
+            is MensagensRemetenteViewHolder -> holder.bind(mensagem)
+            is MensagensDestinatarioViewHolder -> holder.bind(mensagem)
+        }
+    }
+}

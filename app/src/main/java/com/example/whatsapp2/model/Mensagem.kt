@@ -6,6 +6,7 @@ import java.util.Date
 data class Mensagem(
     val idUsuario: String = "",
     val mensagem: String = "",
+    var idMensagem: String = "",
     @ServerTimestamp
     val data: Date? = null,
 )
