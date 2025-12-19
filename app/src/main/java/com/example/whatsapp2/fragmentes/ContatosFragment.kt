@@ -4,16 +4,11 @@ import android.content.Intent
 import android.os.Bundle
 import android.util.Log
 import android.view.LayoutInflater
-import android.view.Menu
-import android.view.MenuInflater
-import android.view.MenuItem
 import android.view.View
 import android.view.ViewGroup
-import androidx.appcompat.app.AlertDialog
 import androidx.fragment.app.Fragment
 import androidx.recyclerview.widget.DividerItemDecoration
 import androidx.recyclerview.widget.LinearLayoutManager
-import com.example.whatsapp2.R
 import com.example.whatsapp2.activities.AdicionarContatoHelper
 import com.example.whatsapp2.activities.MensagensActivity
 import com.example.whatsapp2.adapters.ContatosAdapter
@@ -39,13 +34,6 @@ class ContatosFragment : Fragment() {
         FirebaseFirestore.getInstance()
     }
     
-    private var modoSelecao = false
-
-    override fun onCreate(savedInstanceState: Bundle?) {
-        super.onCreate(savedInstanceState)
-        setHasOptionsMenu(true)
-    }
-
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
         savedInstanceState: Bundle?
@@ -54,12 +42,17 @@ class ContatosFragment : Fragment() {
         
         adicionarContatoHelper = AdicionarContatoHelper(requireActivity() as androidx.appcompat.app.AppCompatActivity)
         
-        contatosAdapter = ContatosAdapter { usuario ->
-            val intent = Intent(context, MensagensActivity::class.java)
-            intent.putExtra("dadosDestinatario", usuario)
-            intent.putExtra("origem", Constantes.ORIGEM_CONTATO)
-            startActivity(intent)
-        }
+        contatosAdapter = ContatosAdapter(
+            onClick = { usuario ->
+                val intent = Intent(context, MensagensActivity::class.java)
+                intent.putExtra("dadosDestinatario", usuario)
+                intent.putExtra("origem", Constantes.ORIGEM_CONTATO)
+                startActivity(intent)
+            },
+            onDelete = { usuario ->
+                mostrarConfirmacaoExclusao(listOf(usuario))
+            }
+        )
         
         binding.rvContatos.adapter = contatosAdapter
         binding.rvContatos.layoutManager = LinearLayoutManager(context)
@@ -117,57 +110,8 @@ class ContatosFragment : Fragment() {
             }
     }
 
-    override fun onCreateOptionsMenu(menu: Menu, inflater: MenuInflater) {
-        inflater.inflate(R.menu.menu_contatos, menu)
-        super.onCreateOptionsMenu(menu, inflater)
-    }
-
-    override fun onOptionsItemSelected(item: MenuItem): Boolean {
-        return when (item.itemId) {
-            R.id.item_excluir_contatos -> {
-                if (modoSelecao) {
-                    // Sair do modo de seleção
-                    modoSelecao = false
-                    contatosAdapter.ativarModoSelecao(false)
-                    contatosAdapter.limparSelecao()
-                    activity?.invalidateOptionsMenu()
-                } else {
-                    // Entrar no modo de seleção
-                    modoSelecao = true
-                    contatosAdapter.ativarModoSelecao(true)
-                    activity?.invalidateOptionsMenu()
-                }
-                true
-            }
-            R.id.item_confirmar_exclusao -> {
-                val contatosSelecionados = contatosAdapter.obterContatosSelecionados()
-                if (contatosSelecionados.isNotEmpty()) {
-                    mostrarConfirmacaoExclusao(contatosSelecionados)
-                } else {
-                    exibirMensagem("Selecione pelo menos um contato para excluir")
-                }
-                true
-            }
-            else -> super.onOptionsItemSelected(item)
-        }
-    }
-
-    override fun onPrepareOptionsMenu(menu: Menu) {
-        super.onPrepareOptionsMenu(menu)
-        val itemExcluir = menu.findItem(R.id.item_excluir_contatos)
-        val itemConfirmar = menu.findItem(R.id.item_confirmar_exclusao)
-        
-        if (modoSelecao) {
-            itemExcluir?.title = "Cancelar"
-            itemConfirmar?.isVisible = true
-        } else {
-            itemExcluir?.title = "Excluir"
-            itemConfirmar?.isVisible = false
-        }
-    }
-
     private fun mostrarConfirmacaoExclusao(contatos: List<Usuario>) {
-        AlertDialog.Builder(requireContext())
+        androidx.appcompat.app.AlertDialog.Builder(requireContext())
             .setTitle("Confirmar exclusão")
             .setMessage("Tem certeza que deseja excluir ${contatos.size} contato(s)?")
             .setNegativeButton("Cancelar") { dialog, _ ->
@@ -197,10 +141,10 @@ class ContatosFragment : Fragment() {
         }
         
         exibirMensagem("${contatos.size} contato(s) excluído(s)")
-        modoSelecao = false
-        contatosAdapter.ativarModoSelecao(false)
-        contatosAdapter.limparSelecao()
-        activity?.invalidateOptionsMenu()
+    }
+
+    private fun exibirMensagem(mensagem: String) {
+        requireActivity().exibirMensagem(mensagem)
     }
 
     override fun onDestroy() {

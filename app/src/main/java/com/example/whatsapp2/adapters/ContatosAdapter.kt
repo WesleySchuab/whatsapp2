@@ -10,33 +10,14 @@ import com.squareup.picasso.Picasso
 
 // Classe que representa o adapter do RecyclerView
 class ContatosAdapter(
-    private val onClick: (Usuario) -> Unit
-
+    private val onClick: (Usuario) -> Unit,
+    private val onDelete: (Usuario) -> Unit
 ) : Adapter<ContatosAdapter.ContatosViewHolder>() {
 
     private var listaContatos = emptyList<Usuario>()
-    private var modoSelecao = false
-    private var contatosSelecionados = mutableSetOf<String>() // IDs dos contatos selecionados
-    
+
     fun adicionarLista(lista: List<Usuario>) {
         listaContatos = lista
-        notifyDataSetChanged()
-    }
-    
-    fun ativarModoSelecao(ativo: Boolean) {
-        modoSelecao = ativo
-        if (!ativo) {
-            contatosSelecionados.clear()
-        }
-        notifyDataSetChanged()
-    }
-    
-    fun obterContatosSelecionados(): List<Usuario> {
-        return listaContatos.filter { it.id in contatosSelecionados }
-    }
-    
-    fun limparSelecao() {
-        contatosSelecionados.clear()
         notifyDataSetChanged()
     }
 
@@ -55,25 +36,13 @@ class ContatosAdapter(
                     .load(usuario.foto)
                     .into(binding.imageContatoFoto)
             }
-            
-            // Mostrar/esconder checkbox baseado no modo de seleção
-            if (modoSelecao) {
-                binding.checkboxContato.visibility = android.view.View.VISIBLE
-                binding.checkboxContato.isChecked = usuario.id in contatosSelecionados
-                
-                binding.clItemContato.setOnClickListener {
-                    if (usuario.id in contatosSelecionados) {
-                        contatosSelecionados.remove(usuario.id)
-                    } else {
-                        contatosSelecionados.add(usuario.id)
-                    }
-                    notifyItemChanged(bindingAdapterPosition)
-                }
-            } else {
-                binding.checkboxContato.visibility = android.view.View.GONE
-                binding.clItemContato.setOnClickListener {
-                    onClick(usuario)
-                }
+
+            binding.clItemContato.setOnClickListener {
+                onClick(usuario)
+            }
+
+            binding.btnExcluirContato.setOnClickListener {
+                onDelete(usuario)
             }
         }
     }

@@ -8,16 +8,6 @@
     android:paddingTop="8dp"
     android:paddingBottom="8dp">
 
-    <CheckBox
-        android:id="@+id/checkboxContato"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:visibility="gone"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintVertical_bias="0.5" />
-
     <com.google.android.material.imageview.ShapeableImageView
         android:id="@+id/imageContatoFoto"
         android:layout_width="50dp"
@@ -38,7 +28,20 @@
         android:layout_marginEnd="8dp"
         android:text="TextView"
         app:layout_constraintBottom_toBottomOf="@+id/imageContatoFoto"
-        app:layout_constraintEnd_toStartOf="@+id/checkboxContato"
+        app:layout_constraintEnd_toStartOf="@+id/btnExcluirContato"
         app:layout_constraintStart_toEndOf="@+id/imageContatoFoto"
         app:layout_constraintTop_toTopOf="@+id/imageContatoFoto" />
+
+    <ImageButton
+        android:id="@+id/btnExcluirContato"
+        android:layout_width="40dp"
+        android:layout_height="40dp"
+        android:background="@android:color/transparent"
+        android:contentDescription="@string/app_name"
+        android:padding="8dp"
+        android:src="@android:drawable/ic_menu_delete"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintVertical_bias="0.5" />
 </androidx.constraintlayout.widget.ConstraintLayout>
