@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto">
+
+    <item
+        android:id="@+id/item_excluir_contatos"
+        android:title="Excluir"
+        app:showAsAction="never" />
+
+    <item
+        android:id="@+id/item_confirmar_exclusao"
+        android:title="Confirmar"
+        android:visible="false"
+        app:showAsAction="never" />
+
+</menu>

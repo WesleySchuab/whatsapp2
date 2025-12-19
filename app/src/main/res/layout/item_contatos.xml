@@ -8,6 +8,16 @@
     android:paddingTop="8dp"
     android:paddingBottom="8dp">
 
+    <CheckBox
+        android:id="@+id/checkboxContato"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:visibility="gone"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintVertical_bias="0.5" />
+
     <com.google.android.material.imageview.ShapeableImageView
         android:id="@+id/imageContatoFoto"
         android:layout_width="50dp"
@@ -22,11 +32,13 @@
 
     <TextView
         android:id="@+id/textContatoNome"
-        android:layout_width="wrap_content"
+        android:layout_width="0dp"
         android:layout_height="wrap_content"
         android:layout_marginStart="16dp"
+        android:layout_marginEnd="8dp"
         android:text="TextView"
         app:layout_constraintBottom_toBottomOf="@+id/imageContatoFoto"
+        app:layout_constraintEnd_toStartOf="@+id/checkboxContato"
         app:layout_constraintStart_toEndOf="@+id/imageContatoFoto"
         app:layout_constraintTop_toTopOf="@+id/imageContatoFoto" />
 </androidx.constraintlayout.widget.ConstraintLayout>
