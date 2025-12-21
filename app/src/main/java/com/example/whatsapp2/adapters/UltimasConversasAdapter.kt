@@ -8,7 +8,8 @@ import com.example.whatsapp2.model.Conversa
 import com.squareup.picasso.Picasso
 
 class UltimasConversasAdapter(
-    private val onClick: (Conversa) -> Unit
+    private val onClick: (Conversa) -> Unit,
+    private val onDelete: (Conversa) -> Unit
 ) : RecyclerView.Adapter<UltimasConversasAdapter.UltimaConversaViewHolder>() {
 
     private var listaConversas = emptyList<Conversa>()
@@ -33,6 +34,10 @@ class UltimasConversasAdapter(
 
             binding.clItemConversa.setOnClickListener {
                 onClick(conversa)
+            }
+
+            binding.btnExcluirConversa.setOnClickListener {
+                onDelete(conversa)
             }
         }
     }

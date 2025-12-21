@@ -5,6 +5,7 @@ import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import androidx.appcompat.app.AlertDialog
 import androidx.fragment.app.Fragment
 import androidx.recyclerview.widget.DividerItemDecoration
 import androidx.recyclerview.widget.LinearLayoutManager
@@ -35,18 +36,23 @@ class ConversasFragment : Fragment() {
         val fragmentBinding = FragmentConversasBinding.inflate(inflater, container, false)
         binding = fragmentBinding
 
-        conversasAdapter = UltimasConversasAdapter { conversa ->
-            val usuario = Usuario(
-                id = conversa.idUsuarioDestinatario,
-                nome = conversa.nome,
-                foto = conversa.foto
-            )
-            val intent = Intent(context, MensagensActivity::class.java).apply {
-                putExtra("dadosDestinatario", usuario)
-                putExtra("origem", Constantes.ORIGEM_CONVERSA)
+        conversasAdapter = UltimasConversasAdapter(
+            onClick = { conversa ->
+                val usuario = Usuario(
+                    id = conversa.idUsuarioDestinatario,
+                    nome = conversa.nome,
+                    foto = conversa.foto
+                )
+                val intent = Intent(context, MensagensActivity::class.java).apply {
+                    putExtra("dadosDestinatario", usuario)
+                    putExtra("origem", Constantes.ORIGEM_CONVERSA)
+                }
+                startActivity(intent)
+            },
+            onDelete = { conversa ->
+                confirmarExclusaoConversa(conversa)
             }
-            startActivity(intent)
-        }
+        )
 
         fragmentBinding.rvConversas.apply {
             adapter = conversasAdapter
@@ -68,6 +74,49 @@ class ConversasFragment : Fragment() {
         super.onDestroyView()
         listenerRegistration?.remove()
         binding = null
+    }
+
+    private fun confirmarExclusaoConversa(conversa: Conversa) {
+        AlertDialog.Builder(requireContext())
+            .setTitle("Excluir conversa")
+            .setMessage("Excluir a conversa com ${conversa.nome}?")
+            .setNegativeButton("Cancelar") { dialog, _ -> dialog.dismiss() }
+            .setPositiveButton("Excluir") { dialog, _ ->
+                excluirConversa(conversa)
+                dialog.dismiss()
+            }
+            .create()
+            .show()
+    }
+
+    private fun excluirConversa(conversa: Conversa) {
+        val idUsuario = firebaseAuth.currentUser?.uid ?: return
+        val idDestinatario = conversa.idUsuarioDestinatario
+
+        // Remove a última conversa da lista do usuário atual
+        firestore.collection(Constantes.CONVERSAS)
+            .document(idUsuario)
+            .collection(Constantes.ULTIMAS_CONVERSAS)
+            .document(idDestinatario)
+            .delete()
+
+        // Remove as mensagens que EU enviei para o outro usuário
+        firestore.collection(Constantes.MENSAGENS)
+            .document(idUsuario)
+            .collection(idDestinatario)
+            .get()
+            .addOnSuccessListener { snapshot ->
+                snapshot?.documents?.forEach { it.reference.delete() }
+            }
+
+        // Remove as mensagens que o outro usuário enviou para MIM
+        firestore.collection(Constantes.MENSAGENS)
+            .document(idDestinatario)
+            .collection(idUsuario)
+            .get()
+            .addOnSuccessListener { snapshot ->
+                snapshot?.documents?.forEach { it.reference.delete() }
+            }
     }
 
     private fun adicionarListenerConversas() {

@@ -39,7 +39,11 @@ class MensagensActivity : AppCompatActivity() {
     }
 
     private var listenerRegistration: ListenerRegistration? = null
-
+    private var listenerRegistration2: ListenerRegistration? = null
+    private var listenersInicializados: Boolean = false
+    
+    private var mensagensEnviadas = mutableListOf<Mensagem>()
+    private var mensagensRecebidas = mutableListOf<Mensagem>()
     private var dadosDestinatario: Usuario? = null
     private var dadosUsuarioRemetente: Usuario? = null
 
@@ -49,19 +53,16 @@ class MensagensActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContentView(binding.root)
 
-        recuperarDadosUsuarios()
+        inicializarRecyclerView()
         inicializarToolbar()
         inicializarEventosDeClique()
-        inicializarRecyclerView()
-        // Atrasar a inicialização de listeners para garantir que dadosDestinatario esteja disponível
-        binding.root.postDelayed({
-            inicializarListeners()
-        }, 500)
+        recuperarDadosUsuarios()  // Já chama inicializarListeners() quando dadosDestinatario estiver disponível
     }
 
     private fun inicializarRecyclerView() {
         with(binding) {
-            mensagensAdapter = MensagensAdapter { mensagem ->
+            val idUsuarioLogado = firebaseAuth.currentUser?.uid.orEmpty()
+            mensagensAdapter = MensagensAdapter(idUsuarioLogado) { mensagem ->
                 excluirMensagem(mensagem)
             }
             rvMensagens.adapter = mensagensAdapter
@@ -72,55 +73,136 @@ class MensagensActivity : AppCompatActivity() {
     override fun onDestroy() {
         super.onDestroy()
         listenerRegistration?.remove()
+        listenerRegistration2?.remove()
+        listenersInicializados = false
     }
 
     private fun inicializarListeners() {
+        if (listenersInicializados) {
+            Log.i("MensagensActivity", "Listeners já inicializados — evitando duplicação")
+            return
+        }
         val idUsuarioRemetente = firebaseAuth.currentUser?.uid
         val idUsuarioDestinatario = dadosDestinatario?.id
 
-        if (idUsuarioRemetente != null && idUsuarioDestinatario != null) {
-            // Carga inicial direta do servidor para garantir sincronização
-            firestore
-                .collection(Constantes.MENSAGENS)
-                .document(idUsuarioRemetente)
-                .collection(idUsuarioDestinatario)
-                .orderBy("data", Query.Direction.ASCENDING)
-                .get(Source.SERVER)
-                .addOnSuccessListener { querySnapshot ->
-                    val lista = querySnapshot.documents.mapNotNull { doc ->
-                        doc.toObject(Mensagem::class.java)?.apply {
-                            if (idMensagem.isBlank()) idMensagem = doc.id
+        Log.i("MensagensActivity", "=== INICIANDO LISTENERS ===")
+        Log.i("MensagensActivity", "Remetente (logado): $idUsuarioRemetente")
+        Log.i("MensagensActivity", "Destinatário: $idUsuarioDestinatario")
+        
+        if (idUsuarioRemetente == null || idUsuarioDestinatario == null) {
+            Log.e("MensagensActivity", "❌ IDs não disponíveis: remetente=$idUsuarioRemetente, destinatario=$idUsuarioDestinatario")
+            return
+        }
+
+        Log.i("MensagensActivity", "✓ Iniciando listeners para remetente=$idUsuarioRemetente, destinatario=$idUsuarioDestinatario")
+
+        // Listener para mensagens enviadas pelo usuário logado
+        // Usar Source.DEFAULT para respeitar cache + real-time updates
+        listenerRegistration = firestore
+            .collection(Constantes.MENSAGENS)
+            .document(idUsuarioRemetente)
+            .collection(idUsuarioDestinatario)
+            .orderBy("data", Query.Direction.ASCENDING)
+            .addSnapshotListener { querySnapshot, error ->
+                if (error != null) {
+                    Log.e("MensagensActivity", "Erro ao carregar mensagens enviadas: ${error.message}")
+                    exibirMensagem("Erro ao carregar mensagens")
+                    return@addSnapshotListener
+                }
+                
+                if (querySnapshot != null) {
+                    val novasMensagensEnviadas = querySnapshot.documents.mapNotNull { doc ->
+                        try {
+                            doc.toObject(Mensagem::class.java)?.apply {
+                                if (idMensagem.isBlank()) {
+                                    idMensagem = doc.id
+                                }
+                                Log.i("MensagensActivity", "Mensagem ENVIADA carregada: idUsuario=$idUsuario, msg='$mensagem'")
+                            }
+                        } catch (e: Exception) {
+                            Log.e("MensagensActivity", "Erro ao converter doc enviado: ${e.message}")
+                            null
                         }
                     }.toMutableList()
-                    mensagensAdapter.adicionarLista(lista)
-                }
-
-            listenerRegistration = firestore
-                .collection(Constantes.MENSAGENS)
-                .document(idUsuarioRemetente)
-                .collection(idUsuarioDestinatario)
-                .orderBy("data", Query.Direction.ASCENDING)
-                .addSnapshotListener { querySnapshot, error ->
-                    if (error != null) {
-                        exibirMensagem("Erro ao carregar mensagens")
+                    
+                    // Atualizar apenas se houve mudança
+                    if (novasMensagensEnviadas != mensagensEnviadas) {
+                        mensagensEnviadas = novasMensagensEnviadas
+                        Log.i("MensagensActivity", "✓ Mensagens ENVIADAS atualizadas: ${mensagensEnviadas.size}")
+                        atualizarExibicao()
                     }
+                }
+            }
 
-                    val listaMensagens = mutableListOf<Mensagem>()
-                    val documentos = querySnapshot?.documents
-                    documentos?.forEach { documentSnapshot ->
-                        val mensagem = documentSnapshot.toObject(Mensagem::class.java)
-                        if (mensagem != null) {
-                            if (mensagem.idMensagem.isBlank()) {
-                                mensagem.idMensagem = documentSnapshot.id
+        // Listener para mensagens recebidas do outro usuário
+        listenerRegistration2 = firestore
+            .collection(Constantes.MENSAGENS)
+            .document(idUsuarioDestinatario)
+            .collection(idUsuarioRemetente)
+            .orderBy("data", Query.Direction.ASCENDING)
+            .addSnapshotListener { querySnapshot, error ->
+                if (error != null) {
+                    Log.e("MensagensActivity", "Erro ao carregar mensagens recebidas: ${error.message}")
+                    exibirMensagem("Erro ao carregar mensagens")
+                    return@addSnapshotListener
+                }
+                
+                if (querySnapshot != null) {
+                    val novasMensagensRecebidas = querySnapshot.documents.mapNotNull { doc ->
+                        try {
+                            doc.toObject(Mensagem::class.java)?.apply {
+                                if (idMensagem.isBlank()) {
+                                    idMensagem = doc.id
+                                }
+                                Log.i("MensagensActivity", "Mensagem RECEBIDA carregada: idUsuario=$idUsuario, msg='$mensagem'")
                             }
-                            listaMensagens.add(mensagem)
-                            Log.i("ListenerMensagem", mensagem.mensagem)
+                        } catch (e: Exception) {
+                            Log.e("MensagensActivity", "Erro ao converter doc recebido: ${e.message}")
+                            null
                         }
+                    }.toMutableList()
+                    
+                    // Atualizar apenas se houve mudança
+                    if (novasMensagensRecebidas != mensagensRecebidas) {
+                        mensagensRecebidas = novasMensagensRecebidas
+                        Log.i("MensagensActivity", "✓ Mensagens RECEBIDAS atualizadas: ${mensagensRecebidas.size}")
+                        atualizarExibicao()
                     }
-                    mensagensAdapter.adicionarLista(listaMensagens)
                 }
+            }
+
+        listenersInicializados = true
+    }
+
+    private fun atualizarExibicao() {
+        Log.i("MensagensActivity", "atualizarExibicao() chamado - enviadas: ${mensagensEnviadas.size}, recebidas: ${mensagensRecebidas.size}")
+        
+        try {
+            // Combinar as duas listas sem duplicação
+            val listaCompleta = (mensagensEnviadas + mensagensRecebidas)
+                .distinctBy { it.idMensagem }  // Remove duplicatas por ID
+                .sortedBy { it.data }           // Ordena por data
+            
+            Log.i("MensagensActivity", "Total após merge: ${listaCompleta.size} mensagens")
+            
+            // Log detalhado de cada mensagem
+            listaCompleta.forEachIndexed { index, msg ->
+                Log.i("MensagensActivity", "[$index] ID=${msg.idMensagem}, Usuario=${msg.idUsuario}, Msg='${msg.mensagem}'")
+            }
+            
+            // Atualizar adapter com a lista completa
+            mensagensAdapter.adicionarLista(listaCompleta.toMutableList())
+            
+            // Scroll para o final para ver a mensagem mais recente
+            if (listaCompleta.isNotEmpty()) {
+                binding.rvMensagens.scrollToPosition(listaCompleta.size - 1)
+            }
+        } catch (e: Exception) {
+            Log.e("MensagensActivity", "Erro em atualizarExibicao(): ${e.message}", e)
         }
     }
+
+
 
     private fun inicializarEventosDeClique() {
         binding.fabEnviar.setOnClickListener {
@@ -181,11 +263,13 @@ class MensagensActivity : AppCompatActivity() {
             .collection(Constantes.ULTIMAS_CONVERSAS)
             .document(conversa.idUsuarioDestinatario)
             .set(conversa)
-            .addOnFailureListener {
+            .addOnSuccessListener {
+                Log.i("MensagensActivity", "Conversa salva com sucesso para ${conversa.idusuarioRemetente}")
+            }
+            .addOnFailureListener { erro ->
+                Log.e("MensagensActivity", "Erro ao salvar conversa: ${erro.message}", erro)
                 exibirMensagem("Erro ao salvar conversa")
             }
-
-
     }
 
     private fun salvarMensagemFirestore(
@@ -195,15 +279,24 @@ class MensagensActivity : AppCompatActivity() {
     ) {
         val docId = mensagem.idMensagem.ifBlank { firestore.collection(Constantes.MENSAGENS).document().id }
         mensagem.idMensagem = docId
+        
+        Log.i("MensagensActivity", "Salvando mensagem ID=$docId de $idUsuarioRemetente para $idUsuarioDestinatario")
+        
         firestore
             .collection(Constantes.MENSAGENS)
             .document(idUsuarioRemetente)
             .collection(idUsuarioDestinatario)
             .document(docId)
             .set(mensagem)
-            .addOnFailureListener() {
+            .addOnSuccessListener {
+                Log.i("MensagensActivity", "Mensagem salva com sucesso: $docId")
+            }
+            .addOnFailureListener { erro ->
+                Log.e("MensagensActivity", "Erro ao enviar mensagem: ${erro.message}", erro)
                 exibirMensagem("Erro ao enviar mensagem")
             }
+        
+        // Limpar campo após envio
         binding.editMensagem.setText("")
     }
 
@@ -214,9 +307,11 @@ class MensagensActivity : AppCompatActivity() {
             title = ""
             if (dadosDestinatario != null) {
                 binding.textMensagemNome.text = dadosDestinatario!!.nome
-                Picasso.get()
-                    .load(dadosDestinatario!!.foto)
-                    .into(binding.imageFotoPerfil)
+                if (!dadosDestinatario!!.foto.isNullOrEmpty()) {
+                    Picasso.get()
+                        .load(dadosDestinatario!!.foto)
+                        .into(binding.imageFotoPerfil)
+                }
             }
         }
         supportActionBar?.setDisplayHomeAsUpEnabled(true)
@@ -225,6 +320,9 @@ class MensagensActivity : AppCompatActivity() {
     private fun recuperarDadosUsuarios() {
         // dados do remetente
         val idUsuarioLogado = firebaseAuth.currentUser?.uid
+        Log.i("MensagensActivity", "=== INICIANDO RECUPERAÇÃO DE DADOS ===")
+        Log.i("MensagensActivity", "ID do usuário logado: $idUsuarioLogado")
+        
         if (idUsuarioLogado != null){
             firestore
                 .collection(Constantes.USUARIOS)
@@ -235,6 +333,7 @@ class MensagensActivity : AppCompatActivity() {
                         val usuario = documentSnapshot.toObject(Usuario::class.java)
                         if (usuario != null) {
                             dadosUsuarioRemetente = usuario
+                            Log.i("MensagensActivity", "✓ Dados do remetente carregados: ${usuario.nome} (ID: ${usuario.id})")
                         }
                     } catch (e: Exception) {
                         Log.e("MensagensActivity", "Erro ao converter documento para Usuario: ${e.message}", e)
@@ -253,10 +352,15 @@ class MensagensActivity : AppCompatActivity() {
                 } else {
                     extras.getParcelable("dadosDestinatario")
                 }
-                Log.i("MensagensActivity", "Dados do destinatário carregados: ${dadosDestinatario?.nome}")
+                Log.i("MensagensActivity", "✓ Dados do destinatário carregados: ${dadosDestinatario?.nome} (ID: ${dadosDestinatario?.id})")
+                
+                // Agora que temos o destinatário, podemos inicializar os listeners
+                inicializarListeners()
             } catch (e: Exception) {
                 Log.e("MensagensActivity", "Erro ao recuperar dados do destinatário: ${e.message}", e)
             }
+        } else {
+            Log.e("MensagensActivity", "Nenhum extra encontrado na intent")
         }
     }
 

@@ -1,5 +1,6 @@
 package com.example.whatsapp2.adapters
 
+import android.util.Log
 import android.view.LayoutInflater
 import android.view.ViewGroup
 import android.widget.Toast
@@ -10,19 +11,24 @@ import com.example.whatsapp2.model.Mensagem
 import com.google.firebase.auth.FirebaseAuth
 
 class MensagensAdapter(
+    private val idUsuarioLogado: String,
     private val onDelete: ((Mensagem) -> Unit)? = null
 ) : RecyclerView.Adapter<RecyclerView.ViewHolder>() {
 
     private var listaMensagens = mutableListOf<Mensagem>()
-    private val idUsuarioRemetente = FirebaseAuth.getInstance().currentUser?.uid
 
     companion object {
         private const val TIPO_REMETENTE = 0
         private const val TIPO_DESTINATARIO = 1
+        private const val TAG = "MensagensAdapter"
     }
 
     fun adicionarLista(lista: MutableList<Mensagem>) {
         listaMensagens = lista
+        Log.i(TAG, "adicionarLista() chamado com ${lista.size} mensagens. ID logado: $idUsuarioLogado")
+        lista.forEachIndexed { index, msg ->
+            Log.i(TAG, "[$index] idUsuario=${msg.idUsuario}, mensagem='${msg.mensagem}'")
+        }
         notifyDataSetChanged()
     }
 
@@ -31,6 +37,7 @@ class MensagensAdapter(
     ) : RecyclerView.ViewHolder(binding.root) {
         fun bind(mensagem: Mensagem) {
             binding.textMensagemRemetente.text = mensagem.mensagem
+            Log.i(TAG, "MensagensRemetenteViewHolder bind: ${mensagem.mensagem}")
             
             binding.textMensagemRemetente.setOnClickListener {
                 Toast.makeText(it.context, "Clicou na mensagem!", Toast.LENGTH_SHORT).show()
@@ -50,6 +57,7 @@ class MensagensAdapter(
     ) : RecyclerView.ViewHolder(binding.root) {
         fun bind(mensagem: Mensagem) {
             binding.textMensagemDestinatario.text = mensagem.mensagem
+            Log.i(TAG, "MensagensDestinatarioViewHolder bind: ${mensagem.mensagem}")
             
             binding.textMensagemDestinatario.setOnClickListener {
                 Toast.makeText(it.context, "Clicou na mensagem!", Toast.LENGTH_SHORT).show()
@@ -68,20 +76,24 @@ class MensagensAdapter(
 
     override fun getItemViewType(position: Int): Int {
         val mensagem = listaMensagens[position]
-        return if (mensagem.idUsuario == idUsuarioRemetente) {
+        val tipo = if (mensagem.idUsuario == idUsuarioLogado) {
             TIPO_REMETENTE
         } else {
             TIPO_DESTINATARIO
         }
+        Log.i(TAG, "getItemViewType[$position]: idUsuario=${mensagem.idUsuario}, idLogado=$idUsuarioLogado, tipo=$tipo")
+        return tipo
     }
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): RecyclerView.ViewHolder {
         val inflater = LayoutInflater.from(parent.context)
         return if (viewType == TIPO_REMETENTE) {
             val binding = ItensMensagensRemetenteBinding.inflate(inflater, parent, false)
+            Log.i(TAG, "Criado MensagensRemetenteViewHolder")
             MensagensRemetenteViewHolder(binding)
         } else {
             val binding = ItensMensagensDestinarioBinding.inflate(inflater, parent, false)
+            Log.i(TAG, "Criado MensagensDestinatarioViewHolder")
             MensagensDestinatarioViewHolder(binding)
         }
     }

@@ -11,7 +11,7 @@ class WhatsApp2Application : Application() {
         // Configurar Firestore UMA ÚNICA VEZ quando o app inicia
         val firestore = FirebaseFirestore.getInstance()
         val settings = FirebaseFirestoreSettings.Builder()
-            .setPersistenceEnabled(false)
+            .setPersistenceEnabled(true)  // Habilitar cache local para sincronização offline
             .build()
         firestore.firestoreSettings = settings
     }
