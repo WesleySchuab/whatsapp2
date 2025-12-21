@@ -63,7 +63,7 @@ class MensagensActivity : AppCompatActivity() {
         with(binding) {
             val idUsuarioLogado = firebaseAuth.currentUser?.uid.orEmpty()
             mensagensAdapter = MensagensAdapter(idUsuarioLogado) { mensagem ->
-                excluirMensagem(mensagem)
+                confirmarExclusaoMensagem(mensagem)
             }
             rvMensagens.adapter = mensagensAdapter
             rvMensagens.layoutManager = LinearLayoutManager(applicationContext)
@@ -419,6 +419,19 @@ class MensagensActivity : AppCompatActivity() {
                     exibirMensagem("Erro ao buscar mensagem")
                 }
         }
+    }
+
+    private fun confirmarExclusaoMensagem(mensagem: Mensagem) {
+        AlertDialog.Builder(this)
+            .setTitle("Excluir mensagem")
+            .setMessage("Deseja realmente excluir esta mensagem?")
+            .setNegativeButton("Cancelar") { dialog, _ -> dialog.dismiss() }
+            .setPositiveButton("Excluir") { dialog, _ ->
+                excluirMensagem(mensagem)
+                dialog.dismiss()
+            }
+            .create()
+            .show()
     }
 
     private fun deletarMensagemDestinatario(
